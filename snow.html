@@ -1,0 +1,317 @@
+<!doctype html>
+<html>
+<head>
+<title>Let it snow</title>
+
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+
+<script>
+
+function Snow(canvas) {
+    var ctx = canvas.getContext("2d");
+    var width  = canvas.width;
+    var height = canvas.height;
+    var w = Math.floor(width  / 10);
+    var h = Math.floor(height / 10);
+
+
+    var wind;
+    var flakes;
+    
+    var displayWind, displaySnow;
+    
+    function randomVector() {
+        var dx = (Math.random() - 0.5) * 2;
+        var dy = (Math.random() - 0.5) * 2;
+        return [dx, dy];
+    }
+/*
+    function initWind(w, h) {
+        wind = [];
+        for (var y = 0; y < h; y++) {
+            var row = [];
+            for (var x = 0; x < w; x++) {
+                row.push(randomVector());
+            }
+            wind.push(row);
+        }
+    }
+
+    function stepWind() {
+        var wind2 = [];
+        for (var y = 0; y < wind.length; ++y) {
+            var row = [];
+            for (var x = 0; x < wind[y].length; ++x) {
+                var weight = 0;
+                var accx = 0;
+                var accy = 0;
+                function accumulate(vector, w)
+                {
+                    accx += vector[0] * w;
+                    accy += vector[1] * w;
+                    weight += w;
+                }
+                
+                accumulate(wind[y][x], 10);
+                if (y > 0) accumulate(wind[y-1][x], 1);
+                if (x > 0) accumulate(wind[y][x-1], 1);
+                if (y+1 < wind.length) accumulate(wind[y+1][x], 1);
+                if (x+1 < wind[y].length) accumulate(wind[y][x+1], 1);
+                //accumulate(randomVector(), 0.1);
+                row.push(normalize([accx / weight, accy / weight]));
+            }
+            wind2.push(row);
+        }
+        wind = wind2;
+    }
+
+    function windAt(x, y)
+    {
+        if (y < 0) return [0, 1];
+        if (x < 0) return [1, 0];
+        if (y >= wind.length) return [0, -1];
+        if (x >= wind[0].length) return [-1, 0];
+        return wind[Math.floor(y)][Math.floor(x)];
+    }
+
+*/
+    function onScreen(x, y)
+    {
+        return (x >= 0) && (x < w) &&
+               (y >= 0) &&  (y < h);
+    }
+
+    function randomCharge()
+    {
+        var x, y;
+        var dist = (w + h) / 2;
+        do {
+            x = Math.random() * (w + dist) - dist/2;
+            y = Math.random() * (h + dist) - dist/2;
+        } while (onScreen(x, y));
+        return {
+            x: x,
+            y: y,
+            charge: (Math.random() - 0.5) * 10
+        };
+    }
+
+    function initWind(w, h) {
+        charges = [];
+        for (var i = 0; i < 100; i++) {
+            charges.push(randomCharge());
+        }
+        /*charges.push({
+            x: w / 2,
+            y: h * 2,
+            charge: 5
+        });*/
+
+/*
+        wind = [];
+        for (var y = 0; y < h; y++) {
+            var row = [];
+            for (var x = 0; x < w; x++) {
+                var fx = 0, fy = 0;
+                charges.forEach(function (charge) {
+                    var dx = charge.x - x;
+                    var dy = charge.y - y;
+                    var dist = Math.sqrt(dx*dx + dy*dy);
+                    var direction_x = dx / dist;
+                    var direction_y = dy / dist;
+                    var magnitude = charge.charge / dist;
+                    fx += direction_x * magnitude;
+                    fy += direction_y * magnitude;
+                });
+                row.push([fx, fy]);
+            }
+            wind.push(row);
+        }*/
+    }
+
+    function windAt(x, y)
+    {
+        var fx = 0, fy = 0;
+        charges.forEach(function (charge) {
+            var dx = charge.x - x;
+            var dy = charge.y - y;
+            var dist = Math.sqrt(dx*dx + dy*dy);
+            var direction_x = dx / dist;
+            var direction_y = dy / dist;
+            var magnitude = charge.charge / dist;
+            fx += direction_x * magnitude;
+            fy += direction_y * magnitude;
+        });
+        return [fx, fy];
+    }
+    
+    function stepWind() {
+    //    if (Math.random() < 0.1)
+            charges[Math.floor(Math.random() * charges.length)] = randomCharge();
+    }
+
+    function renderWind() {
+        ctx.beginPath();
+//        for (var y in wind) {
+//            for (var x in wind[y]) {
+//                var v = wind[y][x];
+        for (var y=0; y < h; ++y) {
+            for (var x = 0; x < w; ++x) {
+                var v = windAt(x, y);
+                ctx.moveTo(x*10, y*10);
+                ctx.lineTo(x*10 + v[0]*5, y*10 + v[1]*5);
+            }
+        }
+        ctx.closePath();
+        ctx.strokeStyle = "#aa6600";
+        ctx.stroke();
+    }
+
+    function renderFlakes()
+    {
+        ctx.beginPath();
+        var rad = 3;
+        flakes.forEach(function(flake) {
+//            ctx.moveTo(flake.x * 10 + rad, flake.y * 10);
+//            ctx.arc(flake.x * 10, flake.y * 10, rad, 0, Math.PI * 2, true);
+
+//            ctx.moveTo(flake.x * 10, flake.y * 10);
+//            ctx.lineTo(flake.x * 10 + 1, flake.y * 10 + 1);
+
+            ctx.moveTo(flake.x * 10, flake.y * 10 - rad);
+            ctx.lineTo(flake.x * 10, flake.y * 10 + rad);
+
+            var a = Math.cos(Math.PI / 6);
+            var b = Math.sin(Math.PI / 6);
+
+            ctx.moveTo(flake.x * 10 - rad * a, flake.y * 10 - rad * b);
+            ctx.lineTo(flake.x * 10 + rad * a, flake.y * 10 + rad * b);
+
+            ctx.moveTo(flake.x * 10 - rad * a, flake.y * 10 + rad * b);
+            ctx.lineTo(flake.x * 10 + rad * a, flake.y * 10 - rad * b);
+
+        });
+        ctx.closePath();
+        ctx.strokeStyle = "#999";
+        ctx.stroke();
+        //ctx.fillStyle = "#999";
+        //ctx.fill();
+    }
+    
+    function render() {
+        ctx.clearRect(0, 0, width, height);
+        if (displaySnow)
+            renderFlakes();
+        if (displayWind)
+            renderWind();
+    }
+
+    function stepFlakes() {
+        flakes.forEach(function(flake) {
+            var localWind = windAt(flake.x, flake.y);
+            flake.vx += localWind[0] * 0.06;
+            flake.vy += localWind[1] * 0.06 + 0.04;
+            flake.vx *= 0.93;
+            flake.vy *= 0.93;
+            flake.x += flake.vx;
+            flake.y += flake.vy;
+            if (!onScreen(flake.x, flake.y))
+            {
+                flake.x = Math.random() * w;
+                flake.y = Math.random() * h;
+                
+                var wind = windAt(flake.x, flake.y);
+                flake.vx = wind[0] * 0.2;
+                flake.vy = wind[1] * 0.2;
+            }
+        });
+    }
+    
+    function step()
+    {
+        stepWind();
+        stepFlakes();
+        render();
+    }
+    
+    function generateFlakes(num)
+    {
+        flakes = [];
+        for (var i = 0; i < num; ++i)
+        {
+            flakes.push({
+                x: Math.random() * w,
+                y: Math.random() * h,
+                vx: 0,
+                vy: 0
+            });
+        }
+    }
+    
+    function sqr(x)
+    {
+        return x*x;
+    }
+    
+    function vecLength(vector)
+    {
+        return Math.sqrt(sqr(vector[0]) + sqr(vector[1]));
+    }
+    
+    function normalize(vector)
+    {
+        var len = vecLength(vector);
+        return [vector[0] / len, vector[1] / len];
+    }
+    
+    function storeState() {
+        window.localStorage.setItem("displayWind", displayWind);
+        window.localStorage.setItem("displaySnow", displaySnow);
+    }
+
+    function loadState() {
+        displayWind = !(window.localStorage.getItem("displayWind") == "false");
+        displaySnow =  (window.localStorage.getItem("displaySnow") == "true" );
+    }
+
+    loadState();
+
+    generateFlakes(300);
+
+    initWind(w, h);
+
+    
+    return {
+        render: render,
+        step: step,
+        toggleWindDisplay: function () { displayWind = !displayWind; storeState(); },
+        toggleSnowDisplay: function () { displaySnow = !displaySnow; storeState(); }
+    };
+}
+
+
+$(function () {
+    var snow = Snow(document.getElementById("world"));
+    snow.render();
+    
+    $(document).keypress(function (ev) {
+        if (ev.which === 119) {
+            snow.toggleWindDisplay();
+            ev.preventDefault();
+        }
+        if (ev.which === 115) {
+            snow.toggleSnowDisplay();
+            ev.preventDefault();
+        }
+    });
+
+    setInterval(snow.step, 100);
+});
+
+</script>
+
+</head>
+<body style="background: black;">
+    <canvas id="world" width="800px" height="400px"/>
+</body>
+</html>
