@@ -270,8 +270,8 @@ function Snow(canvas) {
     }
 
     function loadState() {
-        displayWind = !(window.localStorage.getItem("displayWind") == "false");
-        displaySnow =  (window.localStorage.getItem("displaySnow") == "true" );
+        displayWind =  (window.localStorage.getItem("displayWind") == "true" );
+        displaySnow = !(window.localStorage.getItem("displaySnow") == "false");
     }
 
     loadState();
